@@ -70,7 +70,15 @@ func (h *AuthHandler) Signup(w http.ResponseWriter, r *http.Request) {
 
 	role := "user"
 	if h.AdminEmail != "" && strings.EqualFold(h.AdminEmail, email) {
-		role = "admin"
+		hasAdmin, err := h.Store.HasAdmin(ctx)
+		if err != nil {
+			log.Printf("check existing admin: %v", err)
+			h.signupError(w, "Something went wrong. Try again.")
+			return
+		}
+		if !hasAdmin {
+			role = "admin"
+		}
 	}
 
 	user, err := h.Store.CreateUser(ctx, email, hash, role)
@@ -144,9 +152,20 @@ func (h *AuthHandler) startSession(w http.ResponseWriter, r *http.Request, user 
 		Value:    token,
 		Path:     "/",
 		HttpOnly: true,
+		Secure:   isRequestSecure(r),
+		SameSite: http.SameSiteLaxMode,
 		Expires:  expiresAt,
 	})
 	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+// isRequestSecure reports whether the incoming request arrived over HTTPS —
+// directly, or via a TLS-terminating reverse proxy's X-Forwarded-Proto
+// header. The session cookie's Secure flag is set from this rather than
+// hardcoded true, since forcing it on would silently break login on a plain
+// HTTP dev server (browsers refuse to send Secure cookies back over HTTP).
+func isRequestSecure(r *http.Request) bool {
+	return r.TLS != nil || strings.EqualFold(r.Header.Get("X-Forwarded-Proto"), "https")
 }
 
 // Logout deletes the session server-side (not just the cookie), so the
@@ -163,6 +182,8 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		Value:    "",
 		Path:     "/",
 		HttpOnly: true,
+		Secure:   isRequestSecure(r),
+		SameSite: http.SameSiteLaxMode,
 		Expires:  time.Unix(0, 0),
 	})
 	http.Redirect(w, r, "/login", http.StatusSeeOther)

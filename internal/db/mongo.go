@@ -304,6 +304,19 @@ func (s *Store) GetUserByEmail(ctx context.Context, email string) (*User, error)
 	return &user, nil
 }
 
+// HasAdmin reports whether any account already holds the admin role. Signup
+// uses this so ADMIN_EMAIL auto-promotion only ever applies to the very
+// first account claiming it — once an admin exists, a leaked or guessed
+// ADMIN_EMAIL address can no longer be used to self-promote by signing up
+// with it.
+func (s *Store) HasAdmin(ctx context.Context) (bool, error) {
+	count, err := s.users.CountDocuments(ctx, bson.M{"role": "admin"})
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
 func (s *Store) GetUserByID(ctx context.Context, id primitive.ObjectID) (*User, error) {
 	var user User
 	err := s.users.FindOne(ctx, bson.M{"_id": id}).Decode(&user)

@@ -19,7 +19,7 @@ import (
 	"time"
 )
 
-const geminiEndpoint = "https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s"
+const geminiEndpoint = "https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent"
 
 // --- Canonical wire types, modeled on Gemini's JSON shape (functionCall /
 // functionResponse parts) since that's the format this app was built
@@ -127,12 +127,17 @@ func (g *GeminiClient) Generate(ctx context.Context, contents []Content, tools [
 		return nil, "", fmt.Errorf("marshal request: %w", err)
 	}
 
-	url := fmt.Sprintf(geminiEndpoint, g.model, g.apiKey)
+	url := fmt.Sprintf(geminiEndpoint, g.model)
 	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(payload))
 	if err != nil {
 		return nil, "", fmt.Errorf("build request: %w", err)
 	}
 	httpReq.Header.Set("Content-Type", "application/json")
+	// The API key travels as a header rather than a URL query param so it
+	// never ends up embedded in a transport error string (Go's http.Client
+	// errors often include the request URL verbatim) — those errors get
+	// surfaced straight into the chat UI on failure.
+	httpReq.Header.Set("x-goog-api-key", g.apiKey)
 
 	resp, err := g.httpClient.Do(httpReq)
 	if err != nil {
