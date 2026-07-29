@@ -1,0 +1,677 @@
+:root {
+  --navy-950: #081420;
+  --navy-900: #0d1f2f;
+  --navy-800: #16324a;
+  --teal-400: #2dd4bf;
+  --teal-300: #5eead4;
+  --ink-100: #e7eef2;
+  --ink-400: #8fa3b0;
+  --mono: ui-monospace, "JetBrains Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--navy-950);
+  color: var(--ink-100);
+  font-family: var(--sans);
+  display: flex;
+  justify-content: center;
+  padding: 24px 16px;
+}
+
+.app-shell {
+  width: 100%;
+  max-width: 900px;
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.chat-shell {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+header h1 {
+  font-size: 1.4rem;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+header .subtitle {
+  margin: 4px 0 0;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  color: var(--teal-400);
+}
+
+.chat-log {
+  background: var(--navy-900);
+  border: 1px solid var(--navy-800);
+  border-radius: 12px;
+  padding: 16px;
+  min-height: 55vh;
+  max-height: 65vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.empty-state {
+  color: var(--ink-400);
+  font-size: 0.9rem;
+  margin: auto;
+  text-align: center;
+  max-width: 32ch;
+}
+
+.bubble {
+  max-width: 85%;
+  padding: 10px 14px;
+  border-radius: 10px;
+  line-height: 1.45;
+  font-size: 0.95rem;
+  white-space: pre-wrap;
+}
+
+.bubble.user {
+  align-self: flex-end;
+  background: var(--teal-400);
+  color: var(--navy-950);
+  border-bottom-right-radius: 2px;
+}
+
+.bubble.model {
+  align-self: flex-start;
+  background: var(--navy-800);
+  color: var(--ink-100);
+  border-bottom-left-radius: 2px;
+}
+
+.tool-call {
+  align-self: flex-start;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--teal-300);
+  background: rgba(45, 212, 191, 0.08);
+  border: 1px dashed rgba(45, 212, 191, 0.35);
+  border-radius: 8px;
+  padding: 4px 10px;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+form#chat-form {
+  display: flex;
+  gap: 8px;
+}
+
+form#chat-form input {
+  flex: 1;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--navy-800);
+  background: var(--navy-900);
+  color: var(--ink-100);
+  font-size: 0.95rem;
+}
+
+form#chat-form input:focus-visible {
+  outline: 2px solid var(--teal-400);
+  outline-offset: 1px;
+}
+
+form#chat-form button {
+  padding: 0 20px;
+  border-radius: 10px;
+  border: none;
+  background: var(--teal-400);
+  color: var(--navy-950);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+form#chat-form button:hover {
+  background: var(--teal-300);
+}
+
+form#chat-form button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* --- Typing indicator (shown while waiting for the model's reply) --- */
+
+.typing-row {
+  display: flex;
+  margin-top: -8px;
+}
+
+.typing-bubble {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 16px;
+}
+
+.typing-bubble span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ink-400);
+  animation: typing-bounce 1s infinite ease-in-out;
+}
+
+.typing-bubble span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.typing-bubble span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes typing-bounce {
+  0%, 60%, 100% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+  30% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 480px) {
+  .chat-shell {
+    gap: 12px;
+  }
+  header h1 {
+    font-size: 1.2rem;
+  }
+}
+
+/* --- Sidebar (chat history) --- */
+
+.sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--navy-900);
+  border: 1px solid var(--navy-800);
+  border-radius: 12px;
+  padding: 12px;
+  max-height: 80vh;
+}
+
+.new-chat-btn {
+  display: block;
+  text-align: center;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--navy-800);
+  background: transparent;
+  color: var(--teal-400);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.new-chat-btn:hover {
+  background: var(--navy-800);
+}
+
+.conversation-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.conversation-item {
+  display: flex;
+  align-items: center;
+}
+
+.conversation-item a {
+  display: block;
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  color: var(--ink-400);
+  font-size: 0.85rem;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border-left: 2px solid transparent;
+}
+
+.conversation-item a:hover {
+  background: var(--navy-800);
+  color: var(--ink-100);
+}
+
+.conversation-item.active a {
+  background: rgba(45, 212, 191, 0.1);
+  border-left-color: var(--teal-400);
+  color: var(--ink-100);
+}
+
+.item-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  padding-right: 4px;
+  opacity: 0;
+}
+
+.conversation-item:hover .item-actions,
+.conversation-item.active .item-actions {
+  opacity: 1;
+}
+
+.item-actions form {
+  display: contents;
+}
+
+.icon-btn {
+  border: none;
+  background: none;
+  color: var(--ink-400);
+  font-size: 0.8rem;
+  line-height: 1;
+  padding: 4px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.icon-btn:hover {
+  background: var(--navy-800);
+  color: var(--ink-100);
+}
+
+@media (max-width: 720px) {
+  .app-shell {
+    flex-direction: column;
+  }
+  .sidebar {
+    width: 100%;
+    max-height: 30vh;
+  }
+}
+
+/* --- Header nav (chat + admin pages) --- */
+
+.chat-header,
+.admin-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.user-nav {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 0.85rem;
+  color: var(--ink-400);
+}
+
+.user-nav a {
+  color: var(--teal-400);
+  text-decoration: none;
+}
+
+.user-nav a:hover {
+  text-decoration: underline;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--ink-400);
+  font-size: 0.85rem;
+  font-family: var(--sans);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.link-button:hover {
+  color: var(--ink-100);
+}
+
+/* --- Auth pages (login / signup) --- */
+
+.auth-shell {
+  width: 100%;
+  max-width: 380px;
+  margin: 8vh auto 0;
+  display: flex;
+  justify-content: center;
+}
+
+.auth-card {
+  width: 100%;
+  background: var(--navy-900);
+  border: 1px solid var(--navy-800);
+  border-radius: 14px;
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.auth-card h1 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.auth-card form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.auth-card label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--ink-400);
+}
+
+.auth-card input {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--navy-800);
+  background: var(--navy-950);
+  color: var(--ink-100);
+  font-size: 0.95rem;
+}
+
+.auth-card input:focus-visible {
+  outline: 2px solid var(--teal-400);
+  outline-offset: 1px;
+}
+
+.auth-card button {
+  margin-top: 4px;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  background: var(--teal-400);
+  color: var(--navy-950);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.auth-card button:hover {
+  background: var(--teal-300);
+}
+
+.auth-switch {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--ink-400);
+  text-align: center;
+}
+
+.auth-switch a {
+  color: var(--teal-400);
+  text-decoration: none;
+}
+
+.form-error {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(248, 113, 113, 0.1);
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  color: #fca5a5;
+  font-size: 0.85rem;
+}
+
+/* --- Admin dashboard --- */
+
+.admin-shell {
+  width: 100%;
+  max-width: 860px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.admin-shell h2 {
+  font-size: 1rem;
+  color: var(--ink-400);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0 0 10px;
+}
+
+/* --- Admin tabs (pure CSS — radio inputs, no JS) --- */
+
+.tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.tab-input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.tab-labels {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--navy-800);
+}
+
+.tab-label {
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink-400);
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  user-select: none;
+}
+
+.tab-label:hover {
+  color: var(--ink-100);
+}
+
+.tab-panel {
+  display: none;
+}
+
+#tab-users:checked ~ #panel-users,
+#tab-toolcalls:checked ~ #panel-toolcalls,
+#tab-settings:checked ~ #panel-settings {
+  display: block;
+}
+
+#tab-users:checked ~ .tab-labels label[for="tab-users"],
+#tab-toolcalls:checked ~ .tab-labels label[for="tab-toolcalls"],
+#tab-settings:checked ~ .tab-labels label[for="tab-settings"] {
+  color: var(--teal-400);
+  border-bottom-color: var(--teal-400);
+}
+
+.settings-form {
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background: var(--navy-900);
+  border: 1px solid var(--navy-800);
+  border-radius: 10px;
+  padding: 20px;
+}
+
+.settings-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--ink-400);
+}
+
+.settings-form input,
+.settings-form select {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--navy-800);
+  background: var(--navy-950);
+  color: var(--ink-100);
+  font-size: 0.95rem;
+  font-family: var(--sans);
+}
+
+.settings-form input:focus-visible {
+  outline: 2px solid var(--teal-400);
+  outline-offset: 1px;
+}
+
+.settings-form button {
+  align-self: flex-start;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  background: var(--teal-400);
+  color: var(--navy-950);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.settings-form button:hover {
+  background: var(--teal-300);
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  background: var(--navy-900);
+  border: 1px solid var(--navy-800);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.admin-table th,
+.admin-table td {
+  text-align: left;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--navy-800);
+}
+
+.admin-table th {
+  color: var(--ink-400);
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+
+.admin-table code {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--teal-300);
+}
+
+.admin-table input {
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--navy-800);
+  background: var(--navy-950);
+  color: var(--ink-100);
+  font-size: 0.82rem;
+}
+
+.config-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+}
+
+.config-actions form {
+  display: contents;
+}
+
+.test-success {
+  margin: 4px 0 0;
+  color: var(--teal-300);
+  font-size: 0.75rem;
+}
+
+.role-badge {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.role-badge.role-admin {
+  background: rgba(45, 212, 191, 0.15);
+  color: var(--teal-300);
+}
+
+.role-badge.role-user {
+  background: rgba(143, 163, 176, 0.15);
+  color: var(--ink-400);
+}
+
+.status-badge {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.status-badge.status-active {
+  background: rgba(45, 212, 191, 0.15);
+  color: var(--teal-300);
+}
+
+.status-badge.status-blocked {
+  background: rgba(248, 113, 113, 0.12);
+  color: #fca5a5;
+}
+
+.status-badge.status-pending {
+  background: rgba(250, 204, 21, 0.12);
+  color: #facc15;
+}
+
+.admin-action-form {
+  display: inline-block;
+  margin-right: 10px;
+}
+
+.ink-400 {
+  color: var(--ink-400);
+}

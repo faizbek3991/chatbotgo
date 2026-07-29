@@ -1,0 +1,24 @@
+{{define "turn.html"}}
+{{if .NewConversation}}
+<input type="hidden" name="conversation_id" id="conversation-id-field" value="{{.ConversationID}}" form="chat-form" hx-swap-oob="true">
+<li class="conversation-item active" hx-swap-oob="afterbegin:#conversation-list">
+  <a href="/?c={{.ConversationID}}">{{.Title}}</a>
+  <span class="item-actions">
+    <form method="POST" action="/conversations/{{.ConversationID}}/rename" class="rename-form">
+      <input type="hidden" name="title">
+      <button type="button" class="icon-btn" title="Rename chat"
+        onclick="var t=prompt('Rename chat', '{{.Title}}'); if(t&amp;&amp;t.trim()){this.form.title.value=t.trim(); this.form.submit();}">✎</button>
+    </form>
+    <form method="POST" action="/conversations/{{.ConversationID}}/delete" onsubmit="return confirm('Delete this chat?');">
+      <input type="hidden" name="redirect_active_id" value="{{.ConversationID}}">
+      <button type="submit" class="icon-btn" title="Delete chat">🗑</button>
+    </form>
+  </span>
+</li>
+{{end}}
+<div class="bubble user">{{.UserText}}</div>
+{{range .Steps}}
+<div class="tool-call">&gt; {{.ToolName}}({{.ArgsJSON}})</div>
+{{end}}
+<div class="bubble model">{{.ModelText}}</div>
+{{end}}

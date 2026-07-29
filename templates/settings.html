@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Settings · Function-Calling Agent</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <main class="admin-shell">
+    <header class="admin-header">
+      <h1>AI Settings</h1>
+      <nav class="user-nav">
+        <span>{{.CurrentUser.Email}}</span>
+        <a href="/">Chat</a>
+        <form method="POST" action="/logout"><button type="submit" class="link-button">Log out</button></form>
+      </nav>
+    </header>
+
+    <section>
+      <h2>Currently using</h2>
+      <p>
+        {{if eq .SelectedID ""}}
+        <span class="status-badge status-active">App default</span>
+        {{else}}
+        <span class="ink-400">A config you selected below.</span>
+        {{end}}
+      </p>
+      {{if ne .SelectedID ""}}
+      <form method="POST" action="/settings/select" class="admin-action-form">
+        <button type="submit" class="link-button">Revert to app default</button>
+      </form>
+      {{end}}
+    </section>
+
+    <section>
+      <h2>My AI providers</h2>
+      <form method="POST" action="/settings/configs" class="settings-form">
+        <label>Name
+          <input type="text" name="name" placeholder="e.g. My OpenAI key" required>
+        </label>
+        <label>Provider
+          <select name="provider" required>
+            <option value="gemini">Gemini</option>
+            <option value="openai">OpenAI (or compatible)</option>
+            <option value="anthropic">Anthropic (Claude)</option>
+          </select>
+        </label>
+        <label>Model
+          <input type="text" name="model" placeholder="e.g. gemini-2.5-flash, gpt-4o-mini, claude-opus-5" required>
+        </label>
+        <label>API key
+          <input type="password" name="api_key" autocomplete="off">
+        </label>
+        <label>Base URL <span class="ink-400">(OpenAI-compatible only; leave blank for plain OpenAI)</span>
+          <input type="text" name="base_url" placeholder="https://api.openai.com/v1">
+        </label>
+        <button type="submit">Add</button>
+      </form>
+
+      {{if .OwnConfigs}}
+      {{range .OwnConfigs}}
+      <form id="config-form-{{.ID.Hex}}" method="POST" action="/settings/configs/{{.ID.Hex}}/update"></form>
+      {{end}}
+      <table class="admin-table">
+        <thead>
+          <tr><th>Name</th><th>Provider</th><th>Model</th><th>Base URL</th><th>API key</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+          {{range .OwnConfigs}}
+          <tr>
+            <td><input form="config-form-{{.ID.Hex}}" type="text" name="name" value="{{.Name}}" required></td>
+            <td>{{.Provider}}</td>
+            <td><input form="config-form-{{.ID.Hex}}" type="text" name="model" value="{{.Model}}" required></td>
+            <td><input form="config-form-{{.ID.Hex}}" type="text" name="base_url" value="{{.BaseURL}}" placeholder="(default)"></td>
+            <td><input form="config-form-{{.ID.Hex}}" type="password" name="api_key" placeholder="unchanged" autocomplete="off"></td>
+            <td class="config-actions">
+              <button form="config-form-{{.ID.Hex}}" type="submit" class="link-button">Save</button>
+              <form method="POST" action="/settings/configs/{{.ID.Hex}}/test" class="admin-action-form">
+                <button type="submit" class="link-button">Test</button>
+              </form>
+              {{if eq $.SelectedID .ID.Hex}}
+              <span class="status-badge status-active">in use</span>
+              {{else}}
+              <form method="POST" action="/settings/select" class="admin-action-form">
+                <input type="hidden" name="config_id" value="{{.ID.Hex}}">
+                <button type="submit" class="link-button">Use this</button>
+              </form>
+              {{end}}
+              <form method="POST" action="/settings/configs/{{.ID.Hex}}/delete" class="admin-action-form" onsubmit="return confirm('Delete this provider config?');">
+                <button type="submit" class="link-button">Delete</button>
+              </form>
+            </td>
+          </tr>
+          {{if eq $.Tested .ID.Hex}}
+          <tr>
+            <td colspan="6">
+              {{if $.TestError}}
+              <div class="form-error">Test failed: {{$.TestError}}</div>
+              {{else}}
+              <div class="test-success">Test succeeded</div>
+              {{end}}
+            </td>
+          </tr>
+          {{end}}
+          {{end}}
+        </tbody>
+      </table>
+      {{else}}
+      <p class="ink-400">You haven't added any providers of your own yet.</p>
+      {{end}}
+    </section>
+
+    <section>
+      <h2>Shared AI pool</h2>
+      {{if eq .SharedAIStatus "approved"}}
+        {{if .SharedConfigs}}
+        <table class="admin-table">
+          <thead>
+            <tr><th>Name</th><th>Provider</th><th>Model</th><th>Actions</th></tr>
+          </thead>
+          <tbody>
+            {{range .SharedConfigs}}
+            <tr>
+              <td>{{.Name}}</td>
+              <td>{{.Provider}}</td>
+              <td>{{.Model}}</td>
+              <td class="config-actions">
+                {{if eq $.SelectedID .ID.Hex}}
+                <span class="status-badge status-active">in use</span>
+                {{else}}
+                <form method="POST" action="/settings/select" class="admin-action-form">
+                  <input type="hidden" name="config_id" value="{{.ID.Hex}}">
+                  <button type="submit" class="link-button">Use this</button>
+                </form>
+                {{end}}
+              </td>
+            </tr>
+            {{end}}
+          </tbody>
+        </table>
+        {{else}}
+        <p class="ink-400">You're approved, but the admin hasn't shared any providers yet.</p>
+        {{end}}
+      {{else if eq .SharedAIStatus "pending"}}
+      <p><span class="status-badge status-pending">pending</span> Your request is waiting on admin approval.</p>
+      {{else if eq .SharedAIStatus "rejected"}}
+      <p><span class="status-badge status-blocked">rejected</span> Your request was declined.</p>
+      <form method="POST" action="/settings/request-shared-access" class="admin-action-form">
+        <button type="submit" class="link-button">Request again</button>
+      </form>
+      {{else}}
+      <p class="ink-400">Ask to use the admin's shared/paid AI instead of bringing your own key.</p>
+      <form method="POST" action="/settings/request-shared-access" class="admin-action-form">
+        <button type="submit" class="link-button">Request access</button>
+      </form>
+      {{end}}
+    </section>
+  </main>
+</body>
+</html>

@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Function-Calling Agent · Go + HTMX + MongoDB Atlas</title>
+  <script src="https://unpkg.com/htmx.org@1.9.10" integrity="sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xLSi8nO7UC" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a href="/" class="new-chat-btn">+ New chat</a>
+      <ul id="conversation-list" class="conversation-list">
+        {{range .Conversations}}
+        <li class="conversation-item{{if eq .ID.Hex $.ActiveID}} active{{end}}">
+          <a href="/?c={{.ID.Hex}}">{{.Title}}</a>
+          <span class="item-actions">
+            <form method="POST" action="/conversations/{{.ID.Hex}}/rename" class="rename-form">
+              <input type="hidden" name="title">
+              <button type="button" class="icon-btn" title="Rename chat"
+                onclick="var t=prompt('Rename chat', '{{.Title}}'); if(t&amp;&amp;t.trim()){this.form.title.value=t.trim(); this.form.submit();}">✎</button>
+            </form>
+            <form method="POST" action="/conversations/{{.ID.Hex}}/delete" onsubmit="return confirm('Delete this chat?');">
+              <input type="hidden" name="redirect_active_id" value="{{$.ActiveID}}">
+              <button type="submit" class="icon-btn" title="Delete chat">🗑</button>
+            </form>
+          </span>
+        </li>
+        {{end}}
+      </ul>
+    </aside>
+
+    <main class="chat-shell">
+      <header class="chat-header">
+        <div>
+          <h1>Function-Calling Agent</h1>
+          <p class="subtitle">go · htmx · mongodb atlas · gemini</p>
+        </div>
+        <nav class="user-nav">
+          <span>{{.CurrentUser.Email}}</span>
+          <a href="/settings">AI Settings</a>
+          {{if eq .CurrentUser.Role "admin"}}<a href="/admin">Admin</a>{{end}}
+          <form method="POST" action="/logout"><button type="submit" class="link-button">Log out</button></form>
+        </nav>
+      </header>
+
+      <section id="chat-log" class="chat-log">
+        {{if not .Messages}}
+          <p class="empty-state">Ask about the weather somewhere, a currency exchange rate, or a math expression — the agent will decide when to call a tool.</p>
+        {{end}}
+        {{range .Messages}}
+          {{if eq .Role "user"}}
+            <div class="bubble user">{{.Text}}</div>
+          {{else}}
+            <div class="bubble model">{{.Text}}</div>
+          {{end}}
+        {{end}}
+      </section>
+
+      <div id="chat-loading" class="htmx-indicator typing-row">
+        <div class="bubble model typing-bubble">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+
+      <form id="chat-form"
+            hx-post="/chat"
+            hx-target="#chat-log"
+            hx-swap="beforeend"
+            hx-indicator="#chat-loading"
+            hx-disabled-elt="find button"
+            hx-on::after-request="this.reset()">
+        <input type="hidden" name="conversation_id" id="conversation-id-field" value="{{.ActiveID}}" />
+        <input type="text" name="message" placeholder="e.g. What's the weather in Kuala Lumpur?" autocomplete="off" required />
+        <button type="submit">Send</button>
+      </form>
+    </main>
+  </div>
+</body>
+</html>

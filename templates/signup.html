@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign up · Function-Calling Agent</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <main class="auth-shell">
+    <div class="auth-card">
+      <h1>Create account</h1>
+      {{if .Error}}<p class="form-error">{{.Error}}</p>{{end}}
+      <form method="POST" action="/signup">
+        <label>Email
+          <input type="email" name="email" required autofocus />
+        </label>
+        <label>Password
+          <input type="password" name="password" required minlength="8" />
+        </label>
+        <label>Confirm password
+          <input type="password" name="confirm_password" required minlength="8" />
+        </label>
+        <button type="submit">Sign up</button>
+      </form>
+      <p class="auth-switch">Already have an account? <a href="/login">Log in</a></p>
+    </div>
+  </main>
+</body>
+</html>
