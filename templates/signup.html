@@ -3,13 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sign up · Function-Calling Agent</title>
+  <title>Sign up · ChatBotGo</title>
   <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
   <main class="auth-shell">
     <div class="auth-card">
-      <h1>Create account</h1>
+      <h1>Create your account</h1>
+      <p class="auth-subtitle">Get started with ChatBotGo.</p>
       {{if .Error}}<p class="form-error">{{.Error}}</p>{{end}}
       <form method="POST" action="/signup">
         <label>Email
@@ -21,9 +22,9 @@
         <label>Confirm password
           <input type="password" name="confirm_password" required minlength="8" />
         </label>
-        <button type="submit">Sign up</button>
+        <button type="submit">Create account</button>
       </form>
-      <p class="auth-switch">Already have an account? <a href="/login">Log in</a></p>
+      <p class="auth-switch">Already have an account? <a href="/login">Sign in</a></p>
     </div>
   </main>
 </body>

@@ -4,6 +4,8 @@
   --navy-800: #16324a;
   --teal-400: #2dd4bf;
   --teal-300: #5eead4;
+  --gold-400: #c9962c;
+  --gold-300: #ddb04f;
   --ink-100: #e7eef2;
   --ink-400: #8fa3b0;
   --mono: ui-monospace, "JetBrains Mono", "SFMono-Regular", Menlo, Consolas, monospace;
@@ -383,7 +385,13 @@ form#chat-form button:disabled {
 
 .auth-card h1 {
   margin: 0;
-  font-size: 1.3rem;
+  font-size: 1.5rem;
+}
+
+.auth-subtitle {
+  margin: -8px 0 4px;
+  font-size: 0.85rem;
+  color: var(--ink-400);
 }
 
 .auth-card form {
@@ -419,14 +427,14 @@ form#chat-form button:disabled {
   padding: 10px;
   border-radius: 8px;
   border: none;
-  background: var(--teal-400);
+  background: var(--gold-400);
   color: var(--navy-950);
   font-weight: 600;
   cursor: pointer;
 }
 
 .auth-card button:hover {
-  background: var(--teal-300);
+  background: var(--gold-300);
 }
 
 .auth-switch {
@@ -437,7 +445,7 @@ form#chat-form button:disabled {
 }
 
 .auth-switch a {
-  color: var(--teal-400);
+  color: var(--gold-400);
   text-decoration: none;
 }
 
